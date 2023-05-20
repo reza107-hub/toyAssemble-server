@@ -22,12 +22,23 @@ const client = new MongoClient(uri, {
         version: ServerApiVersion.v1,
         strict: true,
         deprecationErrors: true,
-    }
+    },
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    maxPoolSize: 10,
 });
 
 async function run() {
     try {
         // Connect the client to the server	(optional starting in v4.7)
+
+        client.connect(error => {
+            if (error) {
+                console.log(error);
+                return
+            }
+        })
+
         await client.connect();
         const toysCollection = await client.db('ToyAssemble').collection('Toys')
 
@@ -35,6 +46,21 @@ async function run() {
             const result = await toysCollection.find().toArray()
             res.send(result)
         })
+
+        app.get('/toysForLimit', async (req, res) => {
+            const { limit, page } = req.query;
+            const pageSize = parseInt(limit) || 20;
+            const pageNumber = parseInt(page) || 0;
+            const skip = pageNumber * pageSize;
+            const result = await toysCollection.find().skip(skip).limit(pageSize).toArray()
+            res.send(result)
+        })
+
+        app.get('/totalToys', async (req, res) => {
+            const result = await toysCollection.estimatedDocumentCount()
+            res.send({ totalToys: result })
+        })
+
         app.get('/toys/:id', async (req, res) => {
             const id = req.params.id
             const filter = { _id: new ObjectId(id) }
@@ -47,7 +73,13 @@ async function run() {
             if (req.query?.email) {
                 query = { seller_email: req.query.email }
             }
-            const result = await toysCollection.find(query).toArray()
+            let sortBy = {}
+            if (req.query?.sortBy) {
+                sortBy = {
+                    price: req.query.sortBy === 'descending' ? -1 : 1
+                }
+            }
+            const result = await toysCollection.find(query).sort(sortBy).toArray()
             res.send(result)
         })
 
