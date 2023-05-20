@@ -42,6 +42,15 @@ async function run() {
             res.send(result)
         })
 
+        app.get('/toysQuery', async (req, res) => {
+            let query = {};
+            if (req.query?.email) {
+                query = { seller_email: req.query.email }
+            }
+            const result = await toysCollection.find(query).toArray()
+            res.send(result)
+        })
+
         app.post('/toys', async (req, res) => {
             const body = req.body
             const result = await toysCollection.insertOne(body)
@@ -55,13 +64,7 @@ async function run() {
             const options = { upsert: true }
             const updateDoc = {
                 $set: {
-                    name: body.name,
-                    image: body.image,
                     price: body.price,
-                    rating: body.rating,
-                    category: body.category,
-                    seller: body.seller,
-                    seller_email: body.seller_email,
                     quantity: body.quantity,
                     description: body.description
                 },
