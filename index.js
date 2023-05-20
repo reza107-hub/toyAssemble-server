@@ -3,7 +3,15 @@ const cors = require('cors');
 const port = process.env.PORT || 5000
 const app = express()
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
-app.use(cors())
+
+const corsConfig = {
+    origin: '',
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
+}
+app.use(cors(corsConfig))
+app.options("", cors(corsConfig))
+
 app.use(express.json())
 require('dotenv').config()
 
@@ -39,7 +47,7 @@ async function run() {
             }
         })
 
-        await client.connect();
+        // await client.connect();
         const toysCollection = await client.db('ToyAssemble').collection('Toys')
 
         app.get('/toys', async (req, res) => {
